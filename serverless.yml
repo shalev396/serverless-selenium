@@ -1,0 +1,50 @@
+service: docker-selenium-lambda
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${env:AWS_REGION, 'eu-central-1'}
+  ecr:
+    images:
+      selenium-image:
+        path: ./
+        file: Dockerfile
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: ecr:GetAuthorizationToken
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - ecr:BatchCheckLayerAvailability
+            - ecr:GetDownloadUrlForLayer
+            - ecr:BatchGetImage
+            - ecr:InitiateLayerUpload
+            - ecr:UploadLayerPart
+            - ecr:CompleteLayerUpload
+            - ecr:PutImage
+          Resource: "*"
+
+functions:
+  # Main demo function using handlers/main.js
+  demo:
+    timeout: 60
+    # If you experience any errors such as Chrome crashing or not being available you might need to increase the storage available to your Lambda Function.
+    memorySize: 2048
+    image:
+      name: selenium-image
+      command:
+        - "handlers/main.handler"
+    environment:
+      PASSWORD: ${env:PASSWORD, 'password123'}
+
+  # Example of additional function using the same image
+  # Uncomment when you create src/handlers/test.ts
+  # test:
+  #   timeout: 60
+  #   memorySize: 2048
+  #   image:
+  #     name: selenium-test-image
+  #     command:
+  #       - "handlers/test.handler"

@@ -1,0 +1,54 @@
+{
+  "name": "serverless-selenium",
+  "version": "1.0.0",
+  "description": "Serverless function using Selenium",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "npm ci && webpack",
+    "deploy": "npm run build && cross-env DOCKER_BUILDKIT=0 serverless deploy",
+    "test": "serverless invoke -f demo --path test.json"
+  },
+  "dependencies": {
+    "selenium-webdriver": "^4.25.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "@types/node": "^22.0.0",
+    "@types/selenium-webdriver": "^4.1.0",
+    "cross-env": "^7.0.3",
+    "glob": "^11.0.3",
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.6.0",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^5.1.4"
+  },
+  "keywords": [
+    "selenium",
+    "lambda",
+    "serverless",
+    "chrome",
+    "typescript",
+    "aws",
+    "headless",
+    "automation",
+    "web-scraping"
+  ],
+  "author": {
+    "name": "Shalev Ben Moshe",
+    "email": "shalev396@gmail.com",
+    "url": "https://www.shalev396.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shalev396/serverless-selenium.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shalev396/serverless-selenium/issues"
+  },
+  "homepage": "https://github.com/shalev396/serverless-selenium",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}
