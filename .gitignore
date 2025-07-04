@@ -11,4 +11,15 @@ dist/
 # Serverless
 .serverless/
 
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
 

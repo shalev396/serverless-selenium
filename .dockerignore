@@ -1,29 +1,46 @@
 # Dependencies
+
 node_modules/
 package-lock.json
 
 # Source code (build happens outside container)
+
 src/
 
 # Environment
-.env
 
-# Serverless
+.env
+.env.example
+
+# Build artifacts
+
 .serverless/
 
 # Git
+
 .git/
 .gitignore
 
-# Build tools (not needed in container)
+# Development tools
+
 webpack.config.js
 tsconfig.json
 package.json
 
 # Documentation
+
 README.md
 LICENSE
+dockerlogin.md
 
 # Test files
+
 test.json
 
+# IDE and OS files
+
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+\*.log

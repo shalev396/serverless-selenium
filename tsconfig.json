@@ -1,70 +1,55 @@
 {
-  "compilerOptions": {
-    // Language and Environment
-    "target": "ES2022",
-    "lib": ["ES2022"],
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "moduleDetection": "force",
-
-    // Type Checking - Maximum Strictness
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
-    "exactOptionalPropertyTypes": true,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noImplicitOverride": true,
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    "useUnknownInCatchVariables": true,
-
-    // Modules - Modern import/export with CommonJS compatibility
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "allowImportingTsExtensions": false,
-    "verbatimModuleSyntax": false,
-
-    // Emit
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "removeComments": false,
-    "importHelpers": true,
-    "downlevelIteration": true,
-    "noEmitOnError": true,
-
-    // JavaScript Support
-    "allowJs": false,
-    "checkJs": false,
-
-    // Editor Support
-    "disableSizeLimit": false,
-
-    // Interop Constraints
-    "isolatedModules": true,
-    "preserveSymlinks": false,
-
-    // Completeness
-    "skipLibCheck": false,
-    "skipDefaultLibCheck": false
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"],
+    "compilerOptions": {
+    "target": "ES2022", // Target ES2022 for modern JavaScript features with Node.js 20 compatibility
+    "lib": ["ES2022"], // Include ES2022 standard library definitions
+    "module": "CommonJS", // Use CommonJS module system for AWS Lambda compatibility
+    "moduleResolution": "node", // Use Node.js module resolution strategy
+    "moduleDetection": "force", // Force module detection to treat all files as modules
+    "strict": true, // Enable all strict type checking options
+    "noImplicitAny": true, // Require explicit type annotations, no implicit 'any' types
+    "strictNullChecks": true, // Enable strict null and undefined checking
+    "strictFunctionTypes": true, // Enable strict checking of function parameter types
+    "strictBindCallApply": true, // Enable strict checking of bind, call, and apply methods
+    "strictPropertyInitialization": true, // Enable strict property initialization checking in classes
+    "noImplicitReturns": true, // Require explicit return statements in functions
+    "noImplicitThis": true, // Require explicit 'this' context type annotation
+    "alwaysStrict": true, // Enable strict mode for all emitted JavaScript files
+    "exactOptionalPropertyTypes": true, // Enable exact optional property types (no undefined allowed)
+    "noUncheckedIndexedAccess": true, // Add undefined to unchecked indexed access results
+    "noUnusedLocals": true, // Report errors for unused local variables
+    "noUnusedParameters": true, // Report errors for unused function parameters
+    "noFallthroughCasesInSwitch": true, // Report errors for fallthrough cases in switch statements
+    "noPropertyAccessFromIndexSignature": true, // Require bracket notation for dynamic property access
+    "noImplicitOverride": true, // Require explicit override keyword for overridden methods
+    "allowUnreachableCode": false, // Disallow unreachable code after return statements
+    "allowUnusedLabels": false, // Disallow unused labels
+    "useUnknownInCatchVariables": true, // Use 'unknown' instead of 'any' for catch clause variables
+    "esModuleInterop": true, // Enable interoperability between CommonJS and ES modules
+    "allowSyntheticDefaultImports": true, // Allow default imports from modules with no default export
+    "forceConsistentCasingInFileNames": true, // Enforce consistent file name casing
+    "resolveJsonModule": true, // Enable importing JSON files as modules
+    "allowImportingTsExtensions": false, // Disable TypeScript file extension imports (use .js instead)
+    "verbatimModuleSyntax": false, // Disable verbatim module syntax (allow transformation)
+    "outDir": "./dist", // Output directory for compiled JavaScript files
+    "rootDir": "./src", // Root directory for source files
+    "declaration": true, // Generate .d.ts declaration files
+    "declarationMap": true, // Generate declaration map files for better IDE support
+    "sourceMap": true, // Generate source map files for debugging
+    "removeComments": false, // Preserve comments in output (useful for documentation)
+    "importHelpers": true, // Import helper functions from tslib for smaller output
+    "downlevelIteration": true, // Provide full support for iterables in older JavaScript targets
+    "noEmitOnError": true, // Stop compilation on error (fail fast)
+    "allowJs": false, // Disallow JavaScript files (TypeScript only)
+    "checkJs": false, // Disable type checking for JavaScript files
+    "disableSizeLimit": false, // Allow processing of very large files
+    "isolatedModules": true, // Treat each file as a separate module (required for modern bundlers)
+    "preserveSymlinks": false, // Disable symlink preservation for better compatibility
+    "skipLibCheck": false, // Skip type checking of all declaration files (faster compilation)
+    "skipDefaultLibCheck": false // Skip type checking of default library files
+    },
+  "include": ["src/**/*"], // Include all TypeScript files in the src directory
+  "exclude": ["node_modules", "dist"], // Exclude these directories from compilation
   "ts-node": {
-    "esm": false
+    "esm": false // Disable ES module support for ts-node compatibility
   }
 }

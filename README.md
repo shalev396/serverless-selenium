@@ -6,16 +6,15 @@
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![Selenium](https://img.shields.io/badge/Selenium-43B02A?style=for-the-badge&logo=selenium&logoColor=white)](https://selenium.dev/)
 
-A production-ready, TypeScript-based serverless application that runs headless Chrome with Selenium WebDriver on AWS Lambda using Docker containers. Features **single Docker image for multiple functions**, optional environment variable support, ultra-strict TypeScript configuration, and webpack bundling for optimal performance.
+A production-ready, TypeScript-based serverless application that runs headless Chrome with Selenium WebDriver on AWS Lambda using Docker containers. Features **single Docker image for multiple functions**, ultra-strict TypeScript configuration, and webpack bundling for optimal performance.
 
 ## ✨ Features
 
 - 🚀 **Modern TypeScript** - Ultra-strict configuration with ES2022 features
-- 📦 **Webpack Bundling** - Optimized 386KB bundle with tree-shaking
+- 📦 **Webpack Bundling** - Optimized bundles with tree-shaking
 - 🐳 **Multi-Function Docker Image** - One image for multiple Lambda functions
 - 🔧 **Selenium WebDriver** - Automated browser testing and web scraping
-- ⚡ **AWS Lambda** - 60-second timeout, 2GB memory allocation
-- 🔐 **Optional Environment Variables** - Configurable secret management
+- ⚡ **AWS Lambda** - 15-second timeout, 650MB memory allocation
 - 🛠️ **Production Ready** - Docker best practices and security
 
 ## 🚀 Quick Start
@@ -24,7 +23,7 @@ A production-ready, TypeScript-based serverless application that runs headless C
 
 - Node.js 20+
 - Docker
-- AWS CLI configured
+- AWS CLI configured with appropriate permissions
 - Serverless Framework 3+
 
 ### Installation & Setup
@@ -32,415 +31,201 @@ A production-ready, TypeScript-based serverless application that runs headless C
 ```bash
 # Clone and install
 git clone https://github.com/shalev396/serverless-selenium.git
-cd docker-selenium-lambda
+cd serverless-selenium
 npm install
 
 # Build the project
 npm run build
 ```
 
-### Optional Environment Configuration
+### AWS Configuration
 
-Environment variables are **optional** but can be used to customize behavior:
+1. **Configure AWS CLI**:
 
-**Create `.env` file (optional):**
+   ```bash
+   aws configure
+   ```
+
+2. **ECR Repository Setup**:
+   Create an ECR repository for your Docker images:
+
+   ```bash
+   aws ecr create-repository --repository-name selenium-lambda
+   ```
+
+3. **Docker ECR Login**:
+   Authenticate Docker with ECR to push images:
+
+   **PowerShell:**
+
+   ```powershell
+   $password = aws ecr get-login-password --region <YOUR_AWS_REGION>
+   docker login --username AWS --password $password <YOUR_ACCOUNT_ID>.dkr.ecr.<YOUR_AWS_REGION>.amazonaws.com
+   ```
+
+   **Bash:**
+
+   ```bash
+   aws ecr get-login-password --region <YOUR_AWS_REGION> | docker login --username AWS --password-stdin <YOUR_ACCOUNT_ID>.dkr.ecr.<YOUR_AWS_REGION>.amazonaws.com
+   ```
+
+### Serverless Deployment
+
 ```bash
-# Optional local development environment variables
-# You can customize the password returned in responses
-PASSWORD=your_custom_password
-```
+# Deploy to AWS
+npm run deploy
 
-**Available in `.env.example`:**
-```bash
-# Example environment variables for docker-selenium-lambda
-# Copy this file to .env and customize as needed
-# These are completely optional
-
-PASSWORD=your_password_here
+# Test the deployment
+npm test
 ```
 
 ## 🔧 Configuration
 
-### Multi-Function Docker Architecture
+### Serverless Framework Setup
 
-This project uses a **single Docker image** that can be used for **multiple Lambda functions**. The handler is specified per function in `serverless.yml`:
+The project uses `serverless.yml` for AWS deployment configuration:
 
 ```yaml
-# serverless.yml
+service: selenium-lambda
+
 provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${env:AWS_REGION, 'il-central-1'}
+
   ecr:
     images:
-      selenium-image:          # Single reusable image
+      selenium-image:
         path: ./
         file: Dockerfile
 
 functions:
-  demo:                        # Function 1
+  demo:
+    timeout: 15
+    memorySize: 650
     image:
       name: selenium-image
-      command: 
+      command:
         - "handlers/main.handler"
-  
-  test:                        # Function 2 (same image, different handler)
-    image:
-      name: selenium-image
-      command: 
-        - "handlers/test.handler"
+    environment:
+      ENV: ${env:ENV, 'QA'}
 ```
 
-### File Structure & Build Process
+### Environment Variables
 
-**Source Structure:**
-```
-src/
-├── handlers/
-│   ├── main.ts              # Main demo handler
-│   ├── test.ts              # Test handler
-│   └── user.ts              # User handler
-└── utils/
-    └── helpers.ts           # Shared utilities
-```
+Configure optional environment variables in your deployment:
 
-**Build Output (dist/ mirrors src/):**
-```
-dist/
-├── handlers/
-│   ├── main.js              # Webpack bundled handlers
-│   ├── test.js
-│   └── user.js
-└── utils/
-    └── helpers.js           # Bundled utilities
-```
+| Variable     | Description           | Default        | Example                  |
+| ------------ | --------------------- | -------------- | ------------------------ |
+| `ENV`        | Environment stage     | `QA`           | `DEV`, `QA`, `PROD`      |
+| `AWS_REGION` | AWS deployment region | `il-central-1` | `us-east-1`, `eu-west-1` |
 
-### Optional Environment Variables
-
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `PASSWORD` | Custom password returned in response | `"no-password-set"` | No |
-
-**Environment Variable Flow (when used):**
-- **Local Development**: `.env` file → `process.env` (optional)
-- **Docker Build**: `ENV` in Dockerfile → `process.env` (optional)
-- **Lambda Deployment**: `serverless.yml` environment → `process.env` (optional)
-
-### Lambda Configuration
+**Environment Usage Example:**
 
 ```yaml
-# serverless.yml
+# In serverless.yml
+environment:
+  ENV: ${env:ENV, 'QA'} # Reads from .env file or defaults to 'QA'
+  CUSTOM_VAR: ${env:CUSTOM_VAR, 'default'} # Custom environment variable
+```
+
+**Local .env file example:**
+
+```bash
+ENV=DEV
+AWS_REGION=us-east-1
+CUSTOM_VAR=my-value
+```
+
+### Multi-Function Architecture
+
+Single Docker image supports multiple Lambda functions:
+
+```yaml
 functions:
   demo:
-    timeout: 60          # Extended for Chrome operations
-    memorySize: 2048     # Required for Chrome
     image:
       name: selenium-image
-      command: 
-        - "handlers/main.handler"    # Specify handler path
-    environment:         # Optional environment variables
-      PASSWORD: ${env:PASSWORD, 'password123'}
+      command: ["handlers/main.handler"]
+
+  test:
+    image:
+      name: selenium-image
+      command: ["handlers/test.handler"]
 ```
 
 ## 📦 Build Process
 
 ### Automatic File Discovery
 
-Webpack automatically discovers and processes **all** `.ts` and `.js` files in the `src/` directory:
+Webpack automatically discovers and processes all `.ts` and `.js` files in the `src/` directory:
 
-```bash
-# Add any file to src/ and it gets built automatically
-src/handlers/newHandler.ts  →  dist/handlers/newHandler.js
-src/utils/database.ts       →  dist/utils/database.js
-src/services/auth.ts        →  dist/services/auth.js
+```
+src/handlers/main.ts        → dist/handlers/main.js
+src/handlers/test.ts        → dist/handlers/test.js
+src/utils/helpers.ts        → dist/utils/helpers.js
 ```
 
-### Webpack Bundle Analysis
-```
-asset handlers/main.js 386 KiB [emitted] [minimized]
-├── selenium-webdriver/     681 KiB (71 modules)
-├── jszip/lib/             133 KiB (34 modules)  
-├── pako/                  214 KiB (16 modules)
-├── ws/                    125 KiB (14 modules)
-└── readable-stream/        68.6 KiB (9 modules)
-```
+### Build Features
 
-**Bundle Features:**
 - **Tree-shaken dependencies** - Only used code included
-- **TypeScript declarations** - Full type information
-- **Source maps** - Debug support
-- **CommonJS compatible** - Lambda runtime support
+- **TypeScript compilation** - Full type checking and declarations
+- **Source maps** - Debug support for development
+- **CommonJS output** - Lambda runtime compatibility
 
-## 🎯 Usage & Testing
+### Docker Multi-stage Build
 
-### Adding New Functions
-
-**1. Create Handler File:**
-```typescript
-// src/handlers/newFunction.ts
-import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from "aws-lambda";
-
-export const handler = async (
-  event: APIGatewayProxyEvent,
-  context: Context
-): Promise<APIGatewayProxyResult> => {
-  return {
-    statusCode: 200,
-    body: "New function response"
-  };
-};
-```
-
-**2. Add Function to serverless.yml:**
-```yaml
-functions:
-  newFunction:
-    timeout: 60
-    memorySize: 2048
-    image:
-      name: selenium-image
-      command: 
-        - "handlers/newFunction.handler"
-    environment:
-      PASSWORD: ${env:PASSWORD, 'default123'}
-```
-
-**3. Build and Deploy:**
-```bash
-npm run build    # Automatically includes new handler
-npm run deploy   # Deploys with same Docker image
-```
-
-### Optional Environment Variable Handling
-
-The Lambda function demonstrates optional environment variable and event property handling:
-
-**Environment Variables (Optional):**
-- Can read `PASSWORD` from `process.env["PASSWORD"]` if provided
-- Provides fallback value `"no-password-set"` if environment variable is not configured
-- Supports TypeScript strict null checks with optional chaining
-
-**Event Property Handling:**
-- Safely extracts `runId` from API Gateway query parameters
-- Uses bracket notation for TypeScript strict mode compatibility
-- Handles optional properties with null coalescing
-
-### Lambda Function Response
-
-The function returns comprehensive information including any configured environment variables:
-
-```json
-{
-  "statusCode": 200,
-  "body": "Google,run-id-123,password1234"
-}
-```
-
-**Response Format:** `"<page-title>,<runId>,<password>"`
-
-### API Gateway Event Structure
-
-```typescript
-interface APIGatewayProxyEvent {
-  queryStringParameters?: {
-    runId?: string;
-  } | null;
-}
-```
-
-### Testing with test.json
-
-The project includes a `test.json` file that defines the test payload for the Lambda function:
-
-```json
-{
-  "queryStringParameters": {
-    "runId": "run-id-123"
-  }
-}
-```
-
-**Understanding test.json:**
-- **`queryStringParameters`** - Simulates API Gateway query parameters
-- **`runId`** - Custom parameter that gets included in the response
-- **Structure** - Matches the API Gateway event format exactly
-
-**Creating Custom Tests:**
-
-You can create additional test files for different scenarios:
-
-```json
-// test-no-params.json
-{
-  "queryStringParameters": null
-}
-
-// test-custom-id.json  
-{
-  "queryStringParameters": {
-    "runId": "production-test-456"
-  }
-}
-```
-
-**Running Tests:**
-
-```bash
-# Run the default test (uses test.json)
-npm test
-# Expected: "Google,run-id-123,<password>"
-
-# Run with custom test file
-serverless invoke -f demo --path test-no-params.json
-# Expected: "Google,undefined,<password>"
-
-# Run with another custom test
-serverless invoke -f demo --path test-custom-id.json  
-# Expected: "Google,production-test-456,<password>"
-```
-
-**Test Response Analysis:**
-- **Page title** - Always "Google" (from google.com)
-- **Run ID** - Extracted from `queryStringParameters.runId` or "undefined"
-- **Password** - From environment variable or "no-password-set" fallback
-
-## 📋 Available Scripts
-
-| Script | Description |
-|--------|-------------|
-| `npm run build` | Clean install and webpack bundle |
-| `npm run deploy` | Build and deploy to AWS Lambda |
-| `npm test` | Test deployed function with test.json |
-
-## 🐳 Docker Best Practices
-
-### Single Image, Multiple Functions
-
-The Docker image is built **without a hardcoded CMD**, allowing the same image to be used for multiple Lambda functions:
-
-```dockerfile
-# No CMD specified - handler configured per function
-# This allows the same image to be used for multiple Lambda functions
-```
-
-### Multi-stage Build Optimization
 ```dockerfile
 # Build stage - Chrome binaries
 FROM public.ecr.aws/lambda/nodejs:latest as build
 
-# Final runtime - minimal image
+# Runtime stage - minimal image
 FROM public.ecr.aws/lambda/nodejs:latest
 ```
 
-### Security Features
-- ✅ **`.dockerignore`** - Prevents sensitive files in build context
-- ✅ **No `.env` copying** - Environment variables only
-- ✅ **Minimal runtime** - Only necessary files in final image
-- ✅ **Default ENV values** - Fallback configuration
+**File Structure:**
 
-## 🛠️ Development Workflow
+```
+src/
+├── handlers/
+│   ├── main.ts              # Main demo handler
+│   └── test.ts              # Additional handlers
+└── utils/
+    └── helpers.ts           # Shared utilities
 
-### Local Development
-```bash
-# Install dependencies
-npm install
-
-# Build with webpack
-npm run build
-
-# Test locally (requires deployed function)
-npm test
+dist/                        # Build output (mirrors src/)
+├── handlers/
+│   ├── main.js             # Compiled handlers
+│   └── test.js
+└── utils/
+    └── helpers.js          # Compiled utilities
 ```
 
-### Deployment Process
+## 📋 Available Scripts
+
+| Script           | Description                                   |
+| ---------------- | --------------------------------------------- |
+| `npm run build`  | Clean install dependencies and webpack bundle |
+| `npm run deploy` | Build project and deploy to AWS Lambda        |
+| `npm test`       | Test deployed function with test.json payload |
+
+### Usage Examples
+
 ```bash
-# Full deployment pipeline
-npm run deploy
+# Development workflow
+npm run build              # Build TypeScript to JavaScript
+npm run deploy             # Deploy to AWS
+npm test                   # Test the deployment
 
-# Manual steps
-npm run build           # Webpack bundle
-serverless deploy       # AWS deployment
-npm test                # Verification
-```
+# Testing with custom payload
+serverless invoke -f demo --path test.json
 
-## 📊 Performance Metrics
-
-| Metric | Value | Notes |
-|--------|-------|-------|
-| **Bundle Size** | 386 KiB | Webpack optimized |
-| **Memory Usage** | 2048 MB | Required for Chrome |
-| **Timeout** | 60 seconds | Extended for reliability |
-| **Cold Start** | ~3-5 seconds | Docker container |
-| **Warm Start** | ~1-2 seconds | Reused container |
-
-## 🔍 Troubleshooting
-
-### Common Issues & Solutions
-
-**1. Chrome Crashes**
-- ✅ Memory set to 2048MB or more
-- ✅ Timeout extended to 60 seconds or more
-- ✅ All required Chrome arguments included
-
-**2. Environment Variables Not Working**
-- ✅ Check `.env` file exists locally (if using environment variables)
-- ✅ Verify `serverless.yml` environment mapping
-- ✅ Confirm Docker ENV defaults
-
-**3. Lambda Image Compatibility**
-```bash
-# Build with correct platform
-docker buildx build --platform linux/amd64 --load -t test .
-```
-
-**4. Adding New Functions**
-- ✅ Create handler in `src/handlers/`
-- ✅ Add function to `serverless.yml` with correct command path
-- ✅ Use same `selenium-image` for all functions
-
-### Debug Commands
-```bash
-# View deployment logs
+# View function logs
 serverless logs -f demo
 
-# Test with logging
-serverless invoke -f demo --log
-
-# Debug mode deployment  
-serverless deploy --debug
+# Deploy to specific stage
+serverless deploy --stage prod
 ```
-
-## 📁 Project Structure
-
-```
-docker-selenium-lambda/
-├── src/
-│   ├── handlers/                # Lambda function handlers
-│   │   ├── main.ts             # Main demo handler
-│   │   └── test.ts             # Additional handlers
-│   └── utils/                  # Shared utilities
-├── dist/                       # Webpack build output (mirrors src/)
-│   ├── handlers/
-│   │   ├── main.js            # Built handlers
-│   │   └── test.js
-│   └── utils/
-├── .env                        # Optional local environment (IGNORED)
-├── .env.example               # Optional environment template
-├── .dockerignore              # Docker build exclusions
-├── .gitignore                 # Git exclusions  
-├── Dockerfile                 # Multi-function container build
-├── webpack.config.js          # Automatic file discovery
-├── tsconfig.json             # Ultra-strict TypeScript
-├── serverless.yml            # Multi-function AWS deployment
-├── package.json              # Dependencies & scripts
-├── test.json                 # Default test payload
-└── README.md                 # This documentation
-```
-
-## 🔐 Security Considerations
-
-- **Environment Variables**: Optional - never commit `.env` files if used
-- **Docker Secrets**: Use multi-stage builds, avoid copying secrets
-- **Lambda Permissions**: Minimal IAM permissions for ECR
-- **Build Context**: `.dockerignore` prevents sensitive file inclusion
-- **TypeScript**: Ultra-strict configuration prevents runtime errors
 
 ## 🤝 Contributing
 
@@ -457,7 +242,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - [Selenium WebDriver](https://selenium.dev/) - Browser automation
-- [AWS Lambda](https://aws.amazon.com/lambda/) - Serverless computing  
+- [AWS Lambda](https://aws.amazon.com/lambda/) - Serverless computing
 - [Serverless Framework](https://www.serverless.com/) - Deployment
 - [TypeScript](https://www.typescriptlang.org/) - Type safety
 - [Webpack](https://webpack.js.org/) - Module bundling

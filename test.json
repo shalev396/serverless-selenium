@@ -1,5 +1,6 @@
 {
+  "_comment": "Test payload for Serverless Selenium Lambda function. This file simulates an API Gateway event with query parameters that will be processed by the Lambda handler. Use with: npm test or serverless invoke -f demo --path test.json",
   "queryStringParameters": {
-    "runId": "run-id-123"
+    "param": "396"
   }
 }

@@ -1,50 +1,92 @@
-service: docker-selenium-lambda
+service: selenium-lambda
 
+# ------------------------------------------------------------------------------
+# Provider Configuration
+# ------------------------------------------------------------------------------
 provider:
   name: aws
+
+  # Deployment stage - can be overridden with --stage option
+  # Example: serverless deploy --stage prod
   stage: ${opt:stage, 'dev'}
-  region: ${env:AWS_REGION, 'eu-central-1'}
+
+  # AWS region - defaults to environment variable or il-central-1
+  # Can be overridden with AWS_REGION environment variable
+  region: ${env:AWS_REGION, 'il-central-1'}
+
+  # ECR (Elastic Container Registry) configuration
+  # Defines Docker images that will be built and pushed to ECR
   ecr:
     images:
+      # Single reusable image for multiple Lambda functions
       selenium-image:
-        path: ./
-        file: Dockerfile
+        path: ./ # Build context (current directory)
+        file: Dockerfile # Dockerfile location
+
+  # IAM role permissions for Lambda execution
+  # These permissions are required for ECR operations
   iam:
     role:
       statements:
+        # Allow Lambda to authenticate with ECR
         - Effect: Allow
           Action: ecr:GetAuthorizationToken
           Resource: "*"
+
+        # Allow Lambda to pull Docker images from ECR
         - Effect: Allow
           Action:
-            - ecr:BatchCheckLayerAvailability
-            - ecr:GetDownloadUrlForLayer
-            - ecr:BatchGetImage
-            - ecr:InitiateLayerUpload
-            - ecr:UploadLayerPart
-            - ecr:CompleteLayerUpload
-            - ecr:PutImage
+            - ecr:BatchCheckLayerAvailability # Check if image layers exist
+            - ecr:GetDownloadUrlForLayer # Get download URLs for layers
+            - ecr:BatchGetImage # Download image manifest
+            - ecr:InitiateLayerUpload # Start layer upload (for builds)
+            - ecr:UploadLayerPart # Upload layer parts
+            - ecr:CompleteLayerUpload # Complete layer upload
+            - ecr:PutImage # Push complete image
           Resource: "*"
 
+# ------------------------------------------------------------------------------
+# Lambda Functions Configuration
+# ------------------------------------------------------------------------------
 functions:
-  # Main demo function using handlers/main.js
+  # Main demo function - showcases Selenium WebDriver capabilities
   demo:
-    timeout: 60
-    # If you experience any errors such as Chrome crashing or not being available you might need to increase the storage available to your Lambda Function.
-    memorySize: 2048
-    image:
-      name: selenium-image
-      command:
-        - "handlers/main.handler"
-    environment:
-      PASSWORD: ${env:PASSWORD, 'password123'}
+    # Extended timeout for Chrome operations (startup, page load, screenshots)
+    # Chrome can take 15-30 seconds to initialize in Lambda cold start
+    timeout: 20
 
-  # Example of additional function using the same image
-  # Uncomment when you create src/handlers/test.ts
+    # Memory allocation - Chrome requires significant memory to run
+    # Minimum 1536MB recommended, increase if experiencing Chrome crashes
+    # Note: Higher memory also provides more CPU power in Lambda
+    memorySize: 650
+
+    # Docker image configuration
+    image:
+      name: selenium-image # Reference to ECR image defined above
+      command: # Specify which handler to execute
+        - "handlers/main.handler" # Maps to dist/handlers/main.js exported handler
+
+    # Environment variables passed to Lambda function
+    # These are optional and can be customized per deployment
+    environment:
+      # Example for Environment variable gets value form .env file + fallback
+      ENV: ${env:ENV, 'QA'}
+
+  # Example of additional function using the same Docker image
+  # This demonstrates the multi-function capability of the setup
+  #
+  # To enable this function:
+  # 1. Create src/handlers/test.ts with exported handler function
+  # 2. Run 'npm run build' to compile TypeScript
+  # 3. Uncomment the configuration below
+  # 4. Deploy with 'serverless deploy'
+  #
   # test:
-  #   timeout: 60
-  #   memorySize: 2048
+  #   timeout: 10
+  #   memorySize: 650
   #   image:
   #     name: selenium-test-image
   #     command:
-  #       - "handlers/test.handler"
+  #       - "handlers/test.handler"     # Maps to dist/handlers/test.js
+  #   environment:
+  #     ENV: ${env:ENV, 'QA'}
