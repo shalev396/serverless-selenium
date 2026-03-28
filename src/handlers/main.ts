@@ -84,7 +84,7 @@ export const handler = async (
     console.log("🌐 Navigating to target website...");
 
     // Navigate to the target website
-    await driver.get("https://www.shalev396.com");
+    await driver.get("https://shalev396.com");
 
     await driver.sleep(5000);
 
