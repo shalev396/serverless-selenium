@@ -52,8 +52,7 @@ provider:
 functions:
   # Main demo function - showcases Selenium WebDriver capabilities
   demo:
-    # Extended timeout for Chrome operations (startup, page load)
-    timeout: 60
+    timeout: 90
 
     # Memory allocation - Chrome requires significant memory to run
     # Minimum 1536MB recommended, increase if experiencing Chrome crashes

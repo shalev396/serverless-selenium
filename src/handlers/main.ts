@@ -22,36 +22,25 @@ import {
 const BROWSER_TIMEZONE_ID = "Asia/Jerusalem";
 
 /**
- * Main Lambda handler function
- *
- * Processes API Gateway events, runs headless Chrome, opens the target site,
- * and returns the page title and final URL.
- *
- * @param _event - API Gateway proxy event (unused; kept for API Gateway shape)
- * @param _context - Lambda context (unused)
- * @returns Promise resolving to API Gateway response
+ * Main Lambda handler — Chrome/driver setup aligned with the working Lambda
+ * automation pattern (same flags, build → timezone → navigation).
  */
 export const handler = async (
   _event: APIGatewayProxyEvent,
   _context: Context
 ): Promise<APIGatewayProxyResult> => {
-  console.log("🚀 Starting Selenium WebDriver Lambda handler...");
+  console.log("Start chrome + driver");
 
-  // Configure Chrome options for Lambda environment
-  console.log("⚙️  Setting up Chrome options for Lambda environment...");
   const options = new ChromeOptions();
   const service = new ChromeServiceBuilder("/opt/chromedriver");
 
-  // Set the Chrome binary path (installed via Docker)
   options.setChromeBinaryPath("/opt/chrome/chrome");
 
-  // Essential Chrome flags for Lambda environment
   options.addArguments("--headless=old");
   options.addArguments("--no-sandbox");
   options.addArguments("--disable-dev-shm-usage");
   options.addArguments("--disable-gpu");
-  // Lambda-friendly process model (see WoltFlow automation on AWS Lambda)
-  options.addArguments("--single-process");
+  options.addArguments("--single-process"); //with isWorking="true", ms="163767"||without(//) isWorking="true", ms="168950"
   options.addArguments("--no-zygote");
   options.addArguments("--remote-debugging-port=0");
 
@@ -66,7 +55,7 @@ export const handler = async (
   let driver: WebDriver | null = null;
 
   try {
-    console.log("🔧 Building Chrome WebDriver instance...");
+    console.log("Building Chrome driver...");
 
     driver = await new Builder()
       .forBrowser("chrome")
@@ -77,12 +66,9 @@ export const handler = async (
     console.log("Applying browser timezone override...");
     await applyBrowserTimezone(driver as ChromiumWebDriver, BROWSER_TIMEZONE_ID);
 
-    console.log("🌐 Navigating to target website...");
+    console.log("End chrome + driver");
 
-    // Navigate to the target website
     await driver.get("https://shalev396.com");
-
-    await driver.sleep(5000);
 
     const title = await driver.getTitle();
     console.log(`📄 Page title: ${title}`);
