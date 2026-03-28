@@ -58,7 +58,7 @@ functions:
     # Memory allocation - Chrome requires significant memory to run
     # Minimum 1536MB recommended, increase if experiencing Chrome crashes
     # Note: Higher memory also provides more CPU power in Lambda
-    memorySize: 650
+    memorySize: 1536
 
     # Docker image configuration
     image:
