@@ -6,13 +6,12 @@ service: selenium-lambda
 provider:
   name: aws
 
-  # Deployment stage - can be overridden with --stage option
-  # Example: serverless deploy --stage prod
-  stage: ${opt:stage, 'dev'}
+  # Deployment stage — no default; pass --stage on every deploy/invoke/remove.
+  # Example: serverless deploy --stage dev
+  stage: ${opt:stage}
 
-  # AWS region - defaults to environment variable or il-central-1
-  # Can be overridden with AWS_REGION environment variable
-  region: ${env:AWS_REGION, 'il-central-1'}
+  # AWS region — required in the environment when you run Serverless (no default).
+  region: ${env:AWS_REGION}
 
   # ECR (Elastic Container Registry) configuration
   # Defines Docker images that will be built and pushed to ECR
@@ -66,11 +65,9 @@ functions:
       command: # Specify which handler to execute
         - "handlers/main.handler" # Maps to dist/handlers/main.js exported handler
 
-    # Environment variables passed to Lambda function
-    # These are optional and can be customized per deployment
+    # process.env.ENV in Lambda = deployment stage (no separate ENV variable to maintain).
     environment:
-      # Example for Environment variable gets value form .env file + fallback
-      ENV: ${env:ENV, 'QA'}
+      ENV: ${self:provider.stage}
 
   # Example of additional function using the same Docker image
   # This demonstrates the multi-function capability of the setup
@@ -89,4 +86,4 @@ functions:
   #     command:
   #       - "handlers/test.handler"     # Maps to dist/handlers/test.js
   #   environment:
-  #     ENV: ${env:ENV, 'QA'}
+  #     ENV: ${self:provider.stage}

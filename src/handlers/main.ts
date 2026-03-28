@@ -4,6 +4,9 @@ import {
   Options as ChromeOptions,
   ServiceBuilder as ChromeServiceBuilder,
 } from "selenium-webdriver/chrome";
+import type { ChromiumWebDriver } from "selenium-webdriver/chromium";
+
+import { applyBrowserTimezone } from "../utils/browserTimezone";
 
 // AWS Lambda type definitions
 import {
@@ -11,6 +14,12 @@ import {
   APIGatewayProxyResult,
   Context,
 } from "aws-lambda";
+
+/**
+ * IANA timezone for CDP override. Change to any valid id (e.g. Europe/London, America/New_York).
+ * @see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+ */
+const BROWSER_TIMEZONE_ID = "Asia/Jerusalem";
 
 /**
  * Main Lambda handler function
@@ -27,6 +36,9 @@ export const handler = async (
   event: APIGatewayProxyEvent,
   _context: Context
 ): Promise<APIGatewayProxyResult> => {
+  // Set automatically from deployment stage in serverless.yml (ENV: ${self:provider.stage}).
+  const envExample = process.env["ENV"] ?? "";
+
   console.log("🚀 Starting Selenium WebDriver Lambda handler...");
 
   // Configure Chrome options for Lambda environment
@@ -38,70 +50,61 @@ export const handler = async (
   options.setChromeBinaryPath("/opt/chrome/chrome");
 
   // Essential Chrome flags for Lambda environment
-  // These are critical for running Chrome in a serverless container
-  options.addArguments("--headless=old"); // Run without GUI
-  options.addArguments("--no-sandbox"); // Bypass OS security model
-  options.addArguments("--disable-dev-shm-usage"); // Overcome limited resource problems
-  options.addArguments("--disable-gpu"); // Disable GPU hardware acceleration
-  options.addArguments("--single-process"); // Run in single process mode
-  options.addArguments("--no-zygote"); // Disable zygote process
-  options.addArguments("--remote-debugging-port=0"); // Disable remote debugging
+  options.addArguments("--headless=old");
+  options.addArguments("--no-sandbox");
+  options.addArguments("--disable-dev-shm-usage");
+  options.addArguments("--disable-gpu");
+  // Lambda-friendly process model (see WoltFlow automation on AWS Lambda)
+  options.addArguments("--single-process");
+  options.addArguments("--no-zygote");
+  options.addArguments("--remote-debugging-port=0");
 
-  // Set exact window size for consistent screenshots
   options.addArguments("--window-size=1920,1080");
   options.addArguments("--force-device-scale-factor=1");
 
-  // Performance and security optimizations
-  options.addArguments("--disable-extensions"); // Disable browser extensions
-  options.addArguments("--disable-plugins"); // Disable browser plugins
-  options.addArguments("--no-first-run"); // Skip first run wizards
-  options.addArguments("--disable-default-apps"); // Disable default apps
+  options.addArguments("--disable-extensions");
+  options.addArguments("--disable-plugins");
+  options.addArguments("--no-first-run");
+  options.addArguments("--disable-default-apps");
 
-  // Initialize WebDriver instance
   let driver: WebDriver | null = null;
 
   try {
     console.log("🔧 Building Chrome WebDriver instance...");
 
-    // Create WebDriver with configured options
     driver = await new Builder()
       .forBrowser("chrome")
       .setChromeOptions(options)
       .setChromeService(service)
       .build();
 
+    console.log("Applying browser timezone override...");
+    await applyBrowserTimezone(driver as ChromiumWebDriver, BROWSER_TIMEZONE_ID);
+
     console.log("🌐 Navigating to target website...");
 
     // Navigate to the target website
     await driver.get("https://www.shalev396.com");
 
-    // Wait for page to load completely
     await driver.sleep(5000);
 
-    // Extract page title
     const title = await driver.getTitle();
     console.log(`📄 Page title: ${title}`);
 
-    // Extract query parameters from the API Gateway event
-    // Using bracket notation for TypeScript strict mode compatibility
-    const paramExample = event.queryStringParameters?.["param"] || "0";
-
-    // Read environment variables with fallback defaults
-    const envExample = process.env["ENV"] || "NO_ENV";
+    const paramRaw = event.queryStringParameters?.["param"];
+    const paramExample = paramRaw === undefined ? null : paramRaw;
 
     console.log("📸 Capturing screenshot...");
 
-    // Take a screenshot of the current page
     const screenshot = await driver.takeScreenshot();
 
     console.log("✅ Successfully completed web automation task");
 
-    // Return successful response with collected data
     return {
       statusCode: 200,
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*", // Enable CORS for web clients
+        "Access-Control-Allow-Origin": "*",
       },
       body: JSON.stringify({
         title,
@@ -116,7 +119,6 @@ export const handler = async (
   } catch (error) {
     console.error("❌ Error occurred during web automation:", error);
 
-    // Return error response with details
     return {
       statusCode: 500,
       headers: {
@@ -130,7 +132,6 @@ export const handler = async (
       }),
     };
   } finally {
-    // Ensure WebDriver is properly closed to free resources
     if (driver) {
       console.log("🔒 Closing Chrome WebDriver...");
       await driver.quit();

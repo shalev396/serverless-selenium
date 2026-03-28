@@ -57,9 +57,7 @@ COPY --from=build /opt/chromedriver-linux64 /opt/
 # This separation allows for faster builds and better caching
 COPY dist/ ./
 
-# Set default environment variables
-# These can be overridden during deployment or runtime
-ENV ENV=DEV
+# Lambda reads ENV from serverless.yml at deploy time — no defaults in the image.
 
 # ------------------------------------------------------------------------------
 # Lambda Configuration Notes

@@ -1,0 +1,59 @@
+# Invoke selenium-lambda-prod-demo daily (or manually). Matches main-branch deploy only.
+#
+# repository secrets: AWS_ACCOUNT_ID
+# repository variables: AWS_REGION
+#
+name: Daily smoke test
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/my-github-actions-role
+
+      - name: Invoke Lambda
+        run: |
+          aws lambda invoke \
+            --function-name selenium-lambda-prod-demo \
+            --payload file://test.json \
+            --cli-binary-format raw-in-base64-out \
+            response.json
+
+      - name: Assert response
+        run: |
+          node <<'NODE'
+          const fs = require("fs");
+          const outer = JSON.parse(fs.readFileSync("response.json", "utf8"));
+          if (outer.statusCode !== 200) {
+            console.error("Expected statusCode 200, got:", outer);
+            process.exit(1);
+          }
+          const body = JSON.parse(outer.body);
+          const url = String(body.url || "");
+          if (!url.includes("shalev396.com")) {
+            console.error("Expected final URL to include shalev396.com, got:", url);
+            process.exit(1);
+          }
+          if (!body.screenshot || typeof body.screenshot !== "string" || body.screenshot.length < 100) {
+            console.error("Expected non-empty base64 screenshot string");
+            process.exit(1);
+          }
+          console.log("Smoke test passed:", body.title?.slice?.(0, 80) || "(no title)");
+          NODE

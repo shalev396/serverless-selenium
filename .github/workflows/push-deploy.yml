@@ -1,0 +1,49 @@
+# Deploy on push to main → stage prod only.
+#
+# repository secrets (GitHub)
+#   AWS_ACCOUNT_ID="YOUR_AWS_ACCOUNT_ID"
+# repository variables (GitHub)
+#   AWS_REGION="YOUR_AWS_REGION"
+#
+# IAM: GitHub OIDC → role my-github-actions-role (or edit ARN below).
+#
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/my-github-actions-role
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy
+        run: npm run deploy
