@@ -24,21 +24,17 @@ const BROWSER_TIMEZONE_ID = "Asia/Jerusalem";
 /**
  * Main Lambda handler function
  *
- * Processes API Gateway events and demonstrates web automation using Selenium.
- * The function navigates to a website, captures a screenshot, and returns
- * page information along with configuration details.
+ * Processes API Gateway events, runs headless Chrome, opens the target site,
+ * and returns the page title and final URL.
  *
- * @param event - API Gateway proxy event containing request data
- * @param _context - Lambda context (unused in this example)
+ * @param _event - API Gateway proxy event (unused; kept for API Gateway shape)
+ * @param _context - Lambda context (unused)
  * @returns Promise resolving to API Gateway response
  */
 export const handler = async (
-  event: APIGatewayProxyEvent,
+  _event: APIGatewayProxyEvent,
   _context: Context
 ): Promise<APIGatewayProxyResult> => {
-  // Set automatically from deployment stage in serverless.yml (ENV: ${self:provider.stage}).
-  const envExample = process.env["ENV"] ?? "";
-
   console.log("🚀 Starting Selenium WebDriver Lambda handler...");
 
   // Configure Chrome options for Lambda environment
@@ -91,12 +87,7 @@ export const handler = async (
     const title = await driver.getTitle();
     console.log(`📄 Page title: ${title}`);
 
-    const paramRaw = event.queryStringParameters?.["param"];
-    const paramExample = paramRaw === undefined ? null : paramRaw;
-
-    console.log("📸 Capturing screenshot...");
-
-    const screenshot = await driver.takeScreenshot();
+    const url = await driver.getCurrentUrl();
 
     console.log("✅ Successfully completed web automation task");
 
@@ -106,15 +97,7 @@ export const handler = async (
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
       },
-      body: JSON.stringify({
-        title,
-        url: await driver.getCurrentUrl(),
-        paramExample,
-        envExample,
-        screenshot,
-        timestamp: new Date().toISOString(),
-        message: "Web automation completed successfully",
-      }),
+      body: JSON.stringify({ title, url }),
     };
   } catch (error) {
     console.error("❌ Error occurred during web automation:", error);

@@ -52,7 +52,7 @@ provider:
 functions:
   # Main demo function - showcases Selenium WebDriver capabilities
   demo:
-    # Extended timeout for Chrome operations (startup, page load, screenshots)
+    # Extended timeout for Chrome operations (startup, page load)
     timeout: 60
 
     # Memory allocation - Chrome requires significant memory to run

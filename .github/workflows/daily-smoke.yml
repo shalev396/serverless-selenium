@@ -51,9 +51,5 @@ jobs:
             console.error("Expected final URL to include shalev396.com, got:", url);
             process.exit(1);
           }
-          if (!body.screenshot || typeof body.screenshot !== "string" || body.screenshot.length < 100) {
-            console.error("Expected non-empty base64 screenshot string");
-            process.exit(1);
-          }
           console.log("Smoke test passed:", body.title?.slice?.(0, 80) || "(no title)");
           NODE

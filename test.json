@@ -1,6 +1,4 @@
 {
-  "_comment": "API Gateway-style payload. Optional queryStringParameters.param. Lambda ENV follows stage (default prod). Examples: npm test  |  serverless invoke -f demo --path test.json --stage prod",
-  "queryStringParameters": {
-    "param": "396"
-  }
+  "_comment": "Minimal payload for npm test / aws lambda invoke --payload file://test.json. Query params are unused by the handler.",
+  "httpMethod": "GET"
 }
