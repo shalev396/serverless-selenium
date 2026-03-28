@@ -20,6 +20,12 @@ A production-ready, TypeScript-based serverless application that runs headless C
 - ⚡ **AWS Lambda** - 20-second timeout, 650MB memory allocation
 - 🛠️ **Production Ready** - Docker best practices and security
 
+## Requirements
+
+1. **AWS account** — You deploy Lambda, ECR, and IAM resources into your own AWS account (see [AWS](https://aws.amazon.com/)).
+2. **Serverless Framework account** — Serverless Framework v4 needs a free [Serverless Dashboard](https://app.serverless.com/) account to authenticate the CLI.
+3. **License key from the Serverless dashboard** — In [License keys](https://app.serverless.com/settings/licenseKeys), create a key and import that value wherever you configure the app: set the `SERVERLESS_LICENSE_KEY` GitHub repository secret and the same variable locally (see [`.env.example`](.env.example)).
+
 ## Get started
 
 ```bash
@@ -30,6 +36,7 @@ npm run build
 npm run deploy
 npm test   # optional — invoke deployed Lambda with test.json
 ```
+
 **GitHub:** Add the repository **secret(s)** and **variable(s)** named in [`.env.example`](.env.example). The deploy workflow logs into ECR via [`amazon-ecr-login`](https://github.com/aws-actions/amazon-ecr-login) after assuming your OIDC role; set IAM so that role can push to ECR.
 
 **Local:** Export the same variable names (or copy [`.env.example`](.env.example) to `.env` and load it however you prefer). Stage, region, and the rest live in [`serverless.yml`](serverless.yml) and the workflow files — adjust there to match your account.

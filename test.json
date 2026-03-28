@@ -1,5 +1,5 @@
 {
-  "_comment": "API Gateway-style payload. Optional queryStringParameters.param. Lambda ENV follows stage (default prod). Examples: npx serverless invoke -f demo --path test.json  |  npm test",
+  "_comment": "API Gateway-style payload. Optional queryStringParameters.param. Lambda ENV follows stage (default prod). Examples: npm test  |  serverless invoke -f demo --path test.json --stage prod",
   "queryStringParameters": {
     "param": "396"
   }
