@@ -53,8 +53,7 @@ functions:
   # Main demo function - showcases Selenium WebDriver capabilities
   demo:
     # Extended timeout for Chrome operations (startup, page load, screenshots)
-    # Chrome can take 15-30 seconds to initialize in Lambda cold start
-    timeout: 20
+    timeout: 60
 
     # Memory allocation - Chrome requires significant memory to run
     # Minimum 1536MB recommended, increase if experiencing Chrome crashes
